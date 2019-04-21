@@ -8,6 +8,9 @@ import (
 const (
 	ErrKindPasswordDoesntComply Kind = iota
 	ErrKindInvalidMail
+	ErrKindInvalidJWTToken
+	ErrKindInvalidUserID
+	ErrKindUnableToDecodeToken
 )
 
 type Kind int
@@ -50,6 +53,12 @@ func (e *Err) KindMsg() string {
 		return "ErrKindInvalidMail"
 	case ErrKindPasswordDoesntComply:
 		return "ErrKindPasswordDoesntComply"
+	case ErrKindInvalidJWTToken:
+		return "ErrKindInvalidJWTToken"
+	case ErrKindInvalidUserID:
+		return "ErrKindInvalidUserID"
+	case ErrKindUnableToDecodeToken:
+		return "ErrKindUnableToDecodeToken"
 	default:
 		return "UnknownErrType"
 	}

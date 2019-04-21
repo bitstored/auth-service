@@ -16,7 +16,7 @@ type AuthService struct {
 
 func (s *AuthService) GenerateJWTToken(userID string) (error, string) {
 	/* Create the token */
-	identity, err := s.GetIdentityByID(userID)
+	identity, err := s.getIdentityByID(userID)
 	if err != nil {
 		return err, ""
 	}
@@ -45,7 +45,7 @@ func (s *AuthService) ValidateJWTToken(tokenString string) (*Identity, error) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		uid := claims["userid"].(string)
-		identity, err := s.GetIdentityByID(uid)
+		identity, err := s.getIdentityByID(uid)
 		if err != nil {
 			return nil, err
 		}
