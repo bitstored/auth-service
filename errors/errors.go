@@ -11,6 +11,9 @@ const (
 	ErrKindInvalidJWTToken
 	ErrKindInvalidUserID
 	ErrKindUnableToDecodeToken
+	ErrKindAccountLocked
+	ErrKindAccountNotFound
+	ErrKindTokenExpired
 )
 
 type Kind int
@@ -37,7 +40,7 @@ func (e *Err) AddMessageArr(msgs []string) {
 }
 
 func (e *Err) Message() string {
-	return strings.Join(e.Msgs, "\n")
+	return fmt.Sprintf("%s : %s", e.KindMsg(), strings.Join(e.Msgs, "\n"))
 }
 
 func (e *Err) Error() error {
@@ -59,7 +62,13 @@ func (e *Err) KindMsg() string {
 		return "ErrKindInvalidUserID"
 	case ErrKindUnableToDecodeToken:
 		return "ErrKindUnableToDecodeToken"
+	case ErrKindAccountLocked:
+		return "ErrKindAccountLocked"
+	case ErrKindAccountNotFound:
+		return "ErrKindAccountNotFound"
+	case ErrKindTokenExpired:
+		return "ErrKindTokenExpired"
 	default:
-		return "UnknownErrType"
+		return "ErrKindUnknown"
 	}
 }
