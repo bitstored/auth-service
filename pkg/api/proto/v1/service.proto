@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package auth_service;
+option go_package="pb";
+
+import "google/api/annotations.proto";
+
+service AuthService {
+    rpc ValidatePassword(ValidatePasswordRequest) returns (ValidatePasswordResponse) {
+        option (google.api.http) = {
+            get: "/auth/api/v1/password/validate"
+        };
+    }
+    rpc ValidateEmail(ValidateEmailRequest) returns (ValidateEmailResponse) {
+        option (google.api.http) = {
+            get: "/auth/api/v1/email/validate"
+        };
+    }
+    rpc GenerateJWT(GenerateJWTRequest) returns (GenerateJWTResponse) {
+        option (google.api.http) = {
+            get: "/auth/api/v1/token/generate"
+        };
+    }
+    rpc ValidateJWT(ValidateJWTRequest) returns (ValidateJWTResponse) {
+        option (google.api.http) = {
+            get: "/auth/api/v1/token/validate"
+        };
+    }
+}
+
+message ValidatePasswordRequest {
+    string password= 1;
+}
+message ValidatePasswordResponse {
+    int32 response_code = 1;
+    string response_message = 2;
+    string is_valid = 3;
+}
+message ValidateEmailRequest {
+    string email= 1;
+}
+message ValidateEmailResponse {
+    int32 response_code = 1;
+    string response_message = 2;
+    string is_valid = 3;
+}
+message GenerateJWTRequest {
+    string userID= 1;
+}
+message GenerateJWTResponse {
+    int32 response_code = 1;
+    string response_message = 2;
+    string token = 3;
+}
+message ValidateJWTRequest {
+    string token= 1;
+}
+message ValidateJWTResponse {
+    int32 response_code = 1;
+    string response_message = 2;
+    string is_valid = 3;
+    string is_admin = 4;
+    string user_id = 5;
+}
