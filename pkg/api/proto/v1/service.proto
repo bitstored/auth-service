@@ -65,7 +65,7 @@ message ValidateJWTRequest {
 message ValidateJWTResponse {
     int32 response_code = 1;
     string response_message = 2;
-    string is_valid = 3;
+    bool is_valid = 3;
     bool is_admin = 4;
     string user_id = 5;
 }

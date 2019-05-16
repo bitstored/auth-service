@@ -48,7 +48,7 @@ func (s *AuthServer) ValidateJWT(ctx context.Context, in *pb.ValidateJWTRequest)
 		return nil, status.Error(codes.InvalidArgument, err.Message())
 	}
 
-	return &pb.ValidateJWTResponse{UserId: in.GetUserId(), IsAdmin: in.GetIsAdmin()}, nil
+	return &pb.ValidateJWTResponse{UserId: in.GetUserId(), IsAdmin: in.GetIsAdmin(), IsValid: ok}, nil
 }
 
 func NewServer(service *service.AuthService) *AuthServer {
