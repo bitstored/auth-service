@@ -7,7 +7,7 @@ import (
 	"github.com/bitstored/auth-service/pkg/validator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"strconv"
+	_ "strconv"
 )
 
 type AuthServer struct {
@@ -19,7 +19,7 @@ func (s *AuthServer) ValidatePassword(ctx context.Context, in *pb.ValidatePasswo
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Message())
 	}
-	return &pb.ValidatePasswordResponse{IsValid: strconv.FormatBool(ok)}, nil
+	return &pb.ValidatePasswordResponse{IsValid: ok}, nil
 }
 
 func (s *AuthServer) ValidateEmail(ctx context.Context, in *pb.ValidateEmailRequest) (*pb.ValidateEmailResponse, error) {
@@ -27,11 +27,11 @@ func (s *AuthServer) ValidateEmail(ctx context.Context, in *pb.ValidateEmailRequ
 	if !ok {
 		return nil, status.Error(codes.InvalidArgument, "not a valid email")
 	}
-	return &pb.ValidateEmailResponse{IsValid: strconv.FormatBool(ok)}, nil
+	return &pb.ValidateEmailResponse{IsValid: ok}, nil
 }
 
 func (s *AuthServer) GenerateJWT(ctx context.Context, in *pb.GenerateJWTRequest) (*pb.GenerateJWTResponse, error) {
-	err, token := s.service.GenerateJWTToken(in.GetUserID())
+	err, token := s.service.GenerateJWTToken(in.GetUserId(), in.GetFirstName(), in.GetLastname(), in.GetIsAdmin())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Message())
 	}
@@ -43,11 +43,12 @@ func (s *AuthServer) ValidateJWT(ctx context.Context, in *pb.ValidateJWTRequest)
 	if token == "" {
 		return nil, status.Error(codes.InvalidArgument, "token to be validated is missing")
 	}
-	identity, err := s.service.ValidateJWTToken(token)
-	if err != nil {
+	ok, err := s.service.ValidateJWTToken(token, in.GetUserId(), in.GetFirstName(), in.GetLastname(), in.GetIsAdmin())
+	if err != nil || !ok {
 		return nil, status.Error(codes.InvalidArgument, err.Message())
 	}
-	return &pb.ValidateJWTResponse{UserId: identity.UserID, IsAdmin: strconv.FormatBool(identity.IsAdmin)}, nil
+
+	return &pb.ValidateJWTResponse{UserId: in.GetUserId(), IsAdmin: in.GetIsAdmin()}, nil
 }
 
 func NewServer(service *service.AuthService) *AuthServer {

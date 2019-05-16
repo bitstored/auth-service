@@ -32,8 +32,8 @@ const (
 )
 
 var (
-	grpcAddr = flag.String("grpc", "localhost:4001", "gRPC API address")
-	httpAddr = flag.String("http", "localhost:4021", "HTTP API address")
+	grpcAddr = flag.String("grpc", "localhost:4002", "gRPC API address")
+	httpAddr = flag.String("http", "localhost:5002", "HTTP API address")
 	cert     = flag.String("cert", "scripts/localhost.pem", "certificate pathname")
 	certKey  = flag.String("certkey", "scripts/localhost.key", "private key pathname")
 )
@@ -106,6 +106,8 @@ func main() {
 			log.Fatalf("Unable to start a http server - %s", err)
 		}
 	}()
+
+	fmt.Printf("Auth server listening on  %s for gRPC\nAuth server listening on on %s for http\n", *grpcAddr, *httpAddr)
 
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)

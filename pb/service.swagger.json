@@ -76,10 +76,29 @@
         },
         "parameters": [
           {
-            "name": "userID",
+            "name": "user_id",
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "firstName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "lastname",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "is_admin",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
           }
         ],
         "tags": [
@@ -104,6 +123,31 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "firstName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "lastname",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "is_admin",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
           }
         ],
         "tags": [
@@ -139,7 +183,8 @@
           "type": "string"
         },
         "is_valid": {
-          "type": "string"
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -157,7 +202,8 @@
           "type": "string"
         },
         "is_admin": {
-          "type": "string"
+          "type": "boolean",
+          "format": "boolean"
         },
         "user_id": {
           "type": "string"
@@ -175,7 +221,8 @@
           "type": "string"
         },
         "is_valid": {
-          "type": "string"
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     }

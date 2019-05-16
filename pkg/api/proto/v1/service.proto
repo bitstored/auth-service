@@ -34,7 +34,7 @@ message ValidatePasswordRequest {
 message ValidatePasswordResponse {
     int32 response_code = 1;
     string response_message = 2;
-    string is_valid = 3;
+    bool is_valid = 3;
 }
 message ValidateEmailRequest {
     string email= 1;
@@ -42,10 +42,13 @@ message ValidateEmailRequest {
 message ValidateEmailResponse {
     int32 response_code = 1;
     string response_message = 2;
-    string is_valid = 3;
+    bool is_valid = 3;
 }
 message GenerateJWTRequest {
-    string userID= 1;
+    string user_id= 1;
+    string firstName = 2;
+    string lastname = 3;
+    bool is_admin = 4;
 }
 message GenerateJWTResponse {
     int32 response_code = 1;
@@ -54,11 +57,15 @@ message GenerateJWTResponse {
 }
 message ValidateJWTRequest {
     string token= 1;
+    string user_id= 5;
+    string firstName = 2;
+    string lastname = 3;
+    bool is_admin = 4;
 }
 message ValidateJWTResponse {
     int32 response_code = 1;
     string response_message = 2;
     string is_valid = 3;
-    string is_admin = 4;
+    bool is_admin = 4;
     string user_id = 5;
 }

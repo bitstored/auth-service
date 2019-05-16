@@ -23,10 +23,9 @@ const (
 	blockedAccount
 	invalidToken
 )
-
-func (s *AuthService) getIdentityByID(uid string) (*Identity, *errors.Err) {
-	return nil, errors.NewError(errors.ErrKindInvalidUserID, "unable to retrieve identity, invalid userID")
-}
+const (
+	gRPCPortUser = "localhost:4008"
+)
 
 func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
 	claims, ok := token.Claims.(jwt.MapClaims)
