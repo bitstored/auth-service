@@ -8,15 +8,25 @@ import (
 )
 
 const (
-	mySigningKey   string = "This is a very long and complicated signing key, home this will take 1000 years to be broken"
-	expirationTime        = time.Hour * 24 * 31
-	userIdKey             = "user_id"
-	isAdminKey            = "is_admin"
-	firstNameKey          = "first_name"
-	lastNameKey           = "last_name"
-	expirationKey         = "exp"
-	maxAttempts           = 3
+	expirationTime = time.Hour * 24 * 31
+	userIdKey      = "user_id"
+	isAdminKey     = "is_admin"
+	firstNameKey   = "first_name"
+	lastNameKey    = "last_name"
+	expirationKey  = "exp"
+	maxAttempts    = 3
 )
+
+var (
+	mySigningKey = []byte("This is a very long and complicated signing key, home this will take 1000 years to be broken")
+)
+
+type CustomClaims struct {
+	IsAdmin   bool   `json:"is_admin"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	jwt.StandardClaims
+}
 
 type UserID string
 
@@ -32,22 +42,26 @@ func NewAuthService() *AuthService {
 func (s *AuthService) GenerateJWTToken(userID string, firsname, lastname string, isAdmin bool) (*errors.Err, string) {
 	/* Create the token */
 
-	token := jwt.New(jwt.SigningMethodRS512)
-	claims := token.Claims.(jwt.MapClaims)
-	claims[userIdKey] = userID
-	claims[isAdminKey] = isAdmin
-	claims[firstNameKey] = firsname
-	claims[lastNameKey] = lastname
-	claims[expirationKey] = time.Now().Add(expirationTime).Unix()
-	tokenString, _ := token.SignedString(mySigningKey)
+	claims := CustomClaims{
+		isAdmin,
+		firsname,
+		lastname,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(expirationTime).Unix(),
+			Issuer:    userID,
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 
+	tokenString, err := token.SignedString(mySigningKey)
+	fmt.Printf("Token %v String %s Err %v", token, tokenString, err)
 	return nil, tokenString
 }
 
 func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsname, lastname string, isAdmin bool) (bool, *errors.Err) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return false, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
@@ -56,7 +70,7 @@ func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsna
 	if err != nil {
 		return false, errors.NewError(errors.ErrKindInvalidJWTToken, err.Error())
 	}
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(CustomClaims); ok && token.Valid {
 
 		status := s.validateToken(token)
 		if status == notFoundAccount {
@@ -72,24 +86,24 @@ func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsna
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid")
 		}
 
-		uid, ok := claims[userIdKey].(string)
-		if !ok || uid != userID {
+		uid := claims.Id
+		if uid != userID {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}
-		isAdmin, ok := claims[isAdminKey].(bool)
-		if !ok || isAdmin != isAdmin {
+		isAdmin := claims.IsAdmin
+		if isAdmin != isAdmin {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}
-		fistName, ok := claims[firstNameKey].(string)
-		if !ok || fistName != firsname {
+		fistName := claims.FirstName
+		if fistName != firsname {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}
-		lastName, ok := claims[lastNameKey].(string)
-		if !ok || lastName != lastname {
+		lastName := claims.LastName
+		if lastName != lastname {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}
-		expTime, ok := claims[expirationKey].(time.Time)
-		if !ok || expTime.After(time.Now()) {
+		expTime := claims.ExpiresAt
+		if expTime < time.Now().Unix() {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}
 		return true, nil

@@ -28,11 +28,11 @@ const (
 )
 
 func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(CustomClaims)
 	if !ok {
 		return invalidToken
 	}
-	userID := UserID(claims[userIdKey].(string))
+	userID := UserID(claims.Id)
 	tokens, ok := s.Tokens[userID]
 
 	if !ok {
