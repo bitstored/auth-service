@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/bitstored/auth-service/errors"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/mitchellh/mapstructure"
+
 	"time"
 )
 
@@ -18,14 +20,14 @@ const (
 )
 
 var (
-	mySigningKey = []byte("This is a very long and complicated signing key, home this will take 1000 years to be broken")
+	mySigningKey = []byte("This is a very long and complicated signing key")
 )
 
 type CustomClaims struct {
 	IsAdmin   bool   `json:"is_admin"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	jwt.StandardClaims
+	*jwt.StandardClaims
 }
 
 type UserID string
@@ -36,25 +38,31 @@ type AuthService struct {
 }
 
 func NewAuthService() *AuthService {
-	return &AuthService{}
+	return &AuthService{
+		make(map[UserID][]*jwt.Token, 0),
+		make(map[UserID]int, 0),
+	}
 }
 
 func (s *AuthService) GenerateJWTToken(userID string, firsname, lastname string, isAdmin bool) (*errors.Err, string) {
 	/* Create the token */
 
-	claims := CustomClaims{
-		isAdmin,
-		firsname,
-		lastname,
-		jwt.StandardClaims{
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := &CustomClaims{
+		IsAdmin:   isAdmin,
+		FirstName: firsname,
+		LastName:  lastname,
+		StandardClaims: &jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(expirationTime).Unix(),
 			Issuer:    userID,
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-
+	token.Claims = claims
 	tokenString, err := token.SignedString(mySigningKey)
-	fmt.Printf("Token %v String %s Err %v", token, tokenString, err)
+	if err != nil {
+		return errors.NewError(errors.ErrKindAccountNotFound, err.Error()), ""
+	}
 	return nil, tokenString
 }
 
@@ -62,16 +70,20 @@ func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsna
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return false, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return []byte(mySigningKey), nil
+		return mySigningKey, nil
 	})
 	if err != nil {
 		return false, errors.NewError(errors.ErrKindInvalidJWTToken, err.Error())
 	}
-	if claims, ok := token.Claims.(CustomClaims); ok && token.Valid {
-
+	if token.Valid {
+		claims := new(CustomClaims)
+		err := mapstructure.Decode(token.Claims, claims)
+		if err != nil {
+			return false, errors.NewError(errors.ErrKindInvalidJWTToken, err.Error())
+		}
 		status := s.validateToken(token)
 		if status == notFoundAccount {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "account/token not found")
@@ -108,5 +120,8 @@ func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsna
 		}
 		return true, nil
 	}
-	return false, errors.NewError(errors.ErrKindInvalidJWTToken, err.Error())
+	if err != nil {
+		return false, errors.NewError(errors.ErrKindInvalidJWTToken, err.Error())
+	}
+	return false, errors.NewError(errors.ErrKindInvalidJWTToken, "Unable to parse")
 }

@@ -51,8 +51,8 @@ func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
 		tStr, _ := t.SignedString(mySigningKey)
 		tokenStr, _ := token.SignedString(mySigningKey)
 		if tStr == tokenStr {
-			c := t.Claims.(jwt.MapClaims)
-			if c[expirationKey].(time.Time).After(time.Now()) {
+			c := t.Claims.(CustomClaims)
+			if c.StandardClaims.ExpiresAt < time.Now().Unix() {
 				return expiredToken
 			}
 			return validToken
@@ -71,11 +71,11 @@ func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
 }
 
 func (s *AuthService) registerToken(token *jwt.Token) error {
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(CustomClaims)
 	if !ok {
 		return errors.NewError(errors.ErrKindInvalidJWTToken, "unable to parse jwt token").Error()
 	}
-	userID := UserID(claims[userIdKey].(string))
+	userID := UserID(claims.Id)
 	if _, ok := s.Tokens[userID]; ok {
 		s.Tokens[userID] = append(s.Tokens[userID], token)
 	} else {

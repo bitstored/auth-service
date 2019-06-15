@@ -11,7 +11,7 @@ import (
 )
 
 type AuthServer struct {
-	service *service.AuthService
+	Service *service.AuthService
 }
 
 func (s *AuthServer) ValidatePassword(ctx context.Context, in *pb.ValidatePasswordRequest) (*pb.ValidatePasswordResponse, error) {
@@ -31,7 +31,7 @@ func (s *AuthServer) ValidateEmail(ctx context.Context, in *pb.ValidateEmailRequ
 }
 
 func (s *AuthServer) GenerateJWT(ctx context.Context, in *pb.GenerateJWTRequest) (*pb.GenerateJWTResponse, error) {
-	err, token := s.service.GenerateJWTToken(in.GetUserId(), in.GetFirstName(), in.GetLastname(), in.GetIsAdmin())
+	err, token := s.Service.GenerateJWTToken(in.GetUserId(), in.GetFirstName(), in.GetLastname(), in.GetIsAdmin())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Message())
 	}
@@ -43,7 +43,7 @@ func (s *AuthServer) ValidateJWT(ctx context.Context, in *pb.ValidateJWTRequest)
 	if token == "" {
 		return nil, status.Error(codes.InvalidArgument, "token to be validated is missing")
 	}
-	ok, err := s.service.ValidateJWTToken(token, in.GetUserId(), in.GetFirstName(), in.GetLastname(), in.GetIsAdmin())
+	ok, err := s.Service.ValidateJWTToken(token, in.GetUserId(), in.GetFirstName(), in.GetLastname(), in.GetIsAdmin())
 	if err != nil || !ok {
 		return nil, status.Error(codes.InvalidArgument, err.Message())
 	}
@@ -52,5 +52,5 @@ func (s *AuthServer) ValidateJWT(ctx context.Context, in *pb.ValidateJWTRequest)
 }
 
 func NewServer(service *service.AuthService) *AuthServer {
-	return &AuthServer{service}
+	return &AuthServer{Service: service}
 }
