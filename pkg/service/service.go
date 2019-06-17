@@ -63,11 +63,12 @@ func (s *AuthService) GenerateJWTToken(userID string, firsname, lastname string,
 	if err != nil {
 		return errors.NewError(errors.ErrKindAccountNotFound, err.Error()), ""
 	}
+	s.Tokens[UserID(userID)] = append(s.Tokens[UserID(userID)], token)
 	return nil, tokenString
 }
 
 func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsname, lastname string, isAdmin bool) (bool, *errors.Err) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -98,7 +99,7 @@ func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsna
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid")
 		}
 
-		uid := claims.Id
+		uid := claims.Issuer
 		if uid != userID {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}

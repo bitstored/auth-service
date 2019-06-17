@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/bitstored/auth-service/errors"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/mitchellh/mapstructure"
 	"time"
 )
 
@@ -28,11 +29,12 @@ const (
 )
 
 func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
-	claims, ok := token.Claims.(CustomClaims)
-	if !ok {
+	claims := new(CustomClaims)
+	err := mapstructure.Decode(token.Claims, claims)
+	if err != nil {
 		return invalidToken
 	}
-	userID := UserID(claims.Id)
+	userID := UserID(claims.Issuer)
 	tokens, ok := s.Tokens[userID]
 
 	if !ok {
@@ -44,14 +46,14 @@ func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
 			}
 			s.Attempts[userID] = att + 1
 		}
-		return notFoundAccount
 	}
 
 	for _, t := range tokens {
 		tStr, _ := t.SignedString(mySigningKey)
 		tokenStr, _ := token.SignedString(mySigningKey)
 		if tStr == tokenStr {
-			c := t.Claims.(CustomClaims)
+			c := new(CustomClaims)
+			_ = mapstructure.Decode(token.Claims, c)
 			if c.StandardClaims.ExpiresAt < time.Now().Unix() {
 				return expiredToken
 			}
