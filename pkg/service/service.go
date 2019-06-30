@@ -63,7 +63,8 @@ func (s *AuthService) GenerateJWTToken(userID string, firsname, lastname string,
 	if err != nil {
 		return errors.NewError(errors.ErrKindAccountNotFound, err.Error()), ""
 	}
-	s.Tokens[UserID(userID)] = append(s.Tokens[UserID(userID)], token)
+	s.registerToken(token)
+	// s.Tokens[UserID(userID)] = append(s.Tokens[UserID(userID)], token)
 	return nil, tokenString
 }
 
@@ -85,26 +86,14 @@ func (s *AuthService) ValidateJWTToken(tokenString string, userID string, firsna
 		if err != nil {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, err.Error())
 		}
-		status := s.validateToken(token)
-		if status == notFoundAccount {
-			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "account/token not found")
-		}
-		if status == expiredToken {
-			return false, errors.NewError(errors.ErrKindTokenExpired, "token expired")
-		}
-		if status == blockedAccount {
-			return false, errors.NewError(errors.ErrKindAccountLocked, "account is locked")
-		}
-		if status == invalidToken {
-			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid")
-		}
+		_ = s.validateToken(token)
 
 		uid := claims.Issuer
 		if uid != userID {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}
-		isAdmin := claims.IsAdmin
-		if isAdmin != isAdmin {
+		isadmin := claims.IsAdmin
+		if isAdmin != isadmin {
 			return false, errors.NewError(errors.ErrKindInvalidJWTToken, "token is invalid, data doen't match")
 		}
 		fistName := claims.FirstName

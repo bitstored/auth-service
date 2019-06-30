@@ -72,6 +72,9 @@ func TestAuthService_GenerateJWTToken(t *testing.T) {
 }
 
 func TestAuthService_ValidateJWTToken(t *testing.T) {
+	s := NewAuthService()
+	_, token := s.GenerateJWTToken("uid1", "First", "Last", true)
+	_, token1 := s.GenerateJWTToken("uid1", "First2", "Last2", false)
 
 	type args struct {
 		tokenString string
@@ -81,22 +84,117 @@ func TestAuthService_ValidateJWTToken(t *testing.T) {
 		isAdmin     bool
 	}
 	tests := []struct {
-		name  string
-		args  args
-		want  bool
-		want1 *errors.Err
+		name    string
+		args    args
+		want    bool
+		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "EmptyToken",
+			args: args{
+				tokenString: "",
+				userID:      "uid1",
+				firsname:    "First",
+				lastname:    "Last",
+				isAdmin:     true,
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "Wrong first name",
+			args: args{
+				tokenString: token,
+				userID:      "uid1",
+				firsname:    "The First",
+				lastname:    "Last",
+				isAdmin:     true,
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "Wrong lats name",
+			args: args{
+				tokenString: token,
+				userID:      "uid1",
+				firsname:    "First",
+				lastname:    "Me Last",
+				isAdmin:     true,
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "Wrong role",
+			args: args{
+				tokenString: token,
+				userID:      "uid1",
+				firsname:    "First",
+				lastname:    "Last",
+				isAdmin:     false,
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "Wrong uid",
+			args: args{
+				tokenString: token,
+				userID:      "uiddddddd1",
+				firsname:    "First",
+				lastname:    "Last",
+				isAdmin:     true,
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "Wrong token",
+			args: args{
+				tokenString: token1,
+				userID:      "uid1",
+				firsname:    "First",
+				lastname:    "Last",
+				isAdmin:     true,
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "Corrupted token",
+			args: args{
+				tokenString: "Corrupted" + token,
+				userID:      "uid1",
+				firsname:    "First",
+				lastname:    "Last",
+				isAdmin:     true,
+			},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name: "OK",
+			args: args{
+				tokenString: token,
+				userID:      "uid1",
+				firsname:    "First",
+				lastname:    "Last",
+				isAdmin:     true,
+			},
+			want:    true,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewAuthService()
 			got, got1 := s.ValidateJWTToken(tt.args.tokenString, tt.args.userID, tt.args.firsname, tt.args.lastname, tt.args.isAdmin)
-			if got != tt.want {
-				t.Errorf("AuthService.ValidateJWTToken() got = %v, want %v", got, tt.want)
+
+			if tt.wantErr && got1 == nil {
+				t.Errorf("[%s] AuthService.ValidateJWTToken() got error = %v", tt.name, got1)
 			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("AuthService.ValidateJWTToken() got1 = %v, want %v", got1, tt.want1)
+			if got != tt.want {
+				t.Errorf("[%s]AuthService.ValidateJWTToken() got = %v, want %v", tt.name, got, tt.want)
 			}
 		})
 	}

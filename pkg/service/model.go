@@ -48,9 +48,10 @@ func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
 		}
 	}
 
+	tokenStr, _ := token.SignedString(mySigningKey)
+
 	for _, t := range tokens {
 		tStr, _ := t.SignedString(mySigningKey)
-		tokenStr, _ := token.SignedString(mySigningKey)
 		if tStr == tokenStr {
 			c := new(CustomClaims)
 			_ = mapstructure.Decode(token.Claims, c)
@@ -73,11 +74,12 @@ func (s *AuthService) validateToken(token *jwt.Token) AccountStatus {
 }
 
 func (s *AuthService) registerToken(token *jwt.Token) error {
-	claims, ok := token.Claims.(CustomClaims)
-	if !ok {
+	claims := new(CustomClaims)
+	err := mapstructure.Decode(token.Claims, claims)
+	if err != nil {
 		return errors.NewError(errors.ErrKindInvalidJWTToken, "unable to parse jwt token").Error()
 	}
-	userID := UserID(claims.Id)
+	userID := UserID(claims.Issuer)
 	if _, ok := s.Tokens[userID]; ok {
 		s.Tokens[userID] = append(s.Tokens[userID], token)
 	} else {

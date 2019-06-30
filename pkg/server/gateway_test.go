@@ -3,13 +3,21 @@ package server
 import (
 	"context"
 	"net/http"
-	"reflect"
 	"testing"
 
+	"github.com/bitstored/auth-service/pb"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 )
 
 func TestNewGateway(t *testing.T) {
+	mux := gwruntime.NewServeMux()
+	var err error
+	for _, f := range []func(context.Context, *gwruntime.ServeMux, *grpc.ClientConn) error{
+		pb.RegisterAuthServiceHandler,
+	} {
+		err = f(context.TODO(), mux, nil)
+	}
 	type args struct {
 		ctx  context.Context
 		conn *grpc.ClientConn
@@ -20,7 +28,15 @@ func TestNewGateway(t *testing.T) {
 		want    http.Handler
 		wantErr bool
 	}{
-		// TODO:
+		{
+			name: "Test fail",
+			args: args{
+				ctx:  context.TODO(),
+				conn: nil,
+			},
+			want:    mux,
+			wantErr: err != nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -29,7 +45,7 @@ func TestNewGateway(t *testing.T) {
 				t.Errorf("NewGateway() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if got == nil {
 				t.Errorf("NewGateway() = %v, want %v", got, tt.want)
 			}
 		})
